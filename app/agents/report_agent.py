@@ -1,6 +1,7 @@
 from app.schemas import (
     NewsItem,
     NewsScore,
+    NewsSourceStatus,
     ResearchReport,
     RiskPrediction,
     SentimentSummary,
@@ -15,12 +16,14 @@ class ReportAgent:
         stock_name: str,
         stock_code: str,
         industry: str,
+        news_source_status: NewsSourceStatus,
         news: list[NewsItem],
         scores: list[NewsScore],
         sentiment: SentimentSummary,
         risk: RiskPrediction,
     ) -> ResearchReport:
         report_text = self._build_report_text(
+            news_source_status=news_source_status,
             stock_name=stock_name,
             stock_code=stock_code,
             industry=industry,
@@ -31,6 +34,7 @@ class ReportAgent:
         )
 
         return ResearchReport(
+            news_source_status=news_source_status,
             stock_name=stock_name,
             stock_code=stock_code,
             industry=industry,
@@ -46,6 +50,7 @@ class ReportAgent:
         stock_name: str,
         stock_code: str,
         industry: str,
+        news_source_status: NewsSourceStatus,
         news: list[NewsItem],
         scores: list[NewsScore],
         sentiment: SentimentSummary,
@@ -62,6 +67,10 @@ class ReportAgent:
         lines.append(f"- 综合风险等级：{risk.risk_level}")
         lines.append(f"- 风险概率：{risk.risk_probability}")
         lines.append(f"- 整体新闻情绪：{sentiment.overall_sentiment}")
+        lines.append(f"- 请求新闻源：{news_source_status.requested_provider}")
+        lines.append(f"- 实际新闻源：{news_source_status.actual_provider}")
+        if news_source_status.fallback_used:
+            lines.append(f"- 新闻源回退：{news_source_status.fallback_reason}")
         lines.append("")
 
         lines.append("## 二、情绪与风险概览")

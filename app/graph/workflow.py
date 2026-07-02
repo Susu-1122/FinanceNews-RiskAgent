@@ -22,7 +22,7 @@ class FinanceRiskWorkflow:
         stock_code: str = "",
         industry: str = "",
     ) -> ResearchReport:
-        news = self.news_crawler.run(
+        news, news_source_status = self.news_crawler.run(
             stock_name=stock_name,
             stock_code=stock_code,
             industry=industry,
@@ -38,6 +38,7 @@ class FinanceRiskWorkflow:
             stock_name=stock_name,
             stock_code=stock_code,
             industry=industry,
+            news_source_status=news_source_status,
             news=news,
             scores=scores,
             sentiment=sentiment,

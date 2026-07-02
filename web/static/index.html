@@ -170,6 +170,10 @@
                 <div class="card-title">新闻数量</div>
                 <div class="card-value" id="newsCount">-</div>
             </div>
+            <div class="card">
+                <div class="card-title">实际新闻源</div>
+                <div class="card-value" id="actualProvider">-</div>
+            </div>
         </div>
     </div>
 
@@ -210,9 +214,14 @@
             document.getElementById("riskProbability").textContent = data.risk.risk_probability;
             document.getElementById("overallSentiment").textContent = data.sentiment.overall_sentiment;
             document.getElementById("newsCount").textContent = data.news.length;
+            document.getElementById("actualProvider").textContent = data.news_source_status.actual_provider;
 
             renderNewsList(data.news, data.scores);
-            reportBox.textContent = data.report_text;
+            if (data.news_source_status.fallback_used) {
+                reportBox.textContent = "新闻源提示：" + data.news_source_status.fallback_reason + "\n\n" + data.report_text;
+            } else {
+                reportBox.textContent = data.report_text;
+            }
         } catch (error) {
             reportBox.textContent = "分析失败：" + error;
             newsList.textContent = "新闻展示失败：" + error;

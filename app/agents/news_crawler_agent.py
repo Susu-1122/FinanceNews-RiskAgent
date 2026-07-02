@@ -1,5 +1,5 @@
 from app.data.news_provider import NewsProvider
-from app.schemas import NewsItem
+from app.schemas import NewsItem, NewsSourceStatus
 
 
 class NewsCrawlerAgent:
@@ -16,7 +16,7 @@ class NewsCrawlerAgent:
         stock_name: str,
         stock_code: str = "",
         industry: str = "",
-    ) -> list[NewsItem]:
+    ) -> tuple[list[NewsItem], NewsSourceStatus]:
         return self.news_provider.get_news(
             stock_name=stock_name,
             stock_code=stock_code,

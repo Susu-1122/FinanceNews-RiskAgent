@@ -1,7 +1,7 @@
 import feedparser
 
 from app.config import settings
-from app.schemas import NewsItem
+from app.schemas import NewsItem, NewsSourceStatus
 
 
 class NewsProvider:
@@ -15,13 +15,34 @@ class NewsProvider:
         stock_name: str,
         stock_code: str = "",
         industry: str = "",
-    ) -> list[NewsItem]:
-        if settings.news_provider == "rss":
+    ) -> tuple[list[NewsItem], NewsSourceStatus]:
+        requested_provider = settings.news_provider
+
+        if requested_provider == "rss":
             rss_news = self._get_rss_news(stock_name, stock_code, industry)
             if rss_news:
-                return rss_news
+                return rss_news, NewsSourceStatus(
+                    requested_provider=requested_provider,
+                    actual_provider="rss",
+                    fallback_used=False,
+                    fallback_reason="",
+                )
 
-        return self._get_mock_news(stock_name, stock_code, industry)
+            mock_news = self._get_mock_news(stock_name, stock_code, industry)
+            return mock_news, NewsSourceStatus(
+                requested_provider=requested_provider,
+                actual_provider="mock",
+                fallback_used=True,
+                fallback_reason="RSS 未匹配到相关新闻，已回退到 Mock 新闻。",
+            )
+
+        mock_news = self._get_mock_news(stock_name, stock_code, industry)
+        return mock_news, NewsSourceStatus(
+            requested_provider=requested_provider,
+            actual_provider="mock",
+            fallback_used=False,
+            fallback_reason="",
+        )
 
     def _get_rss_news(
         self,

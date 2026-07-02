@@ -25,6 +25,13 @@ class NewsScore(BaseModel):
     event_type: str = Field(description="事件类型，例如 policy、competition、earnings")
     reason: str = Field(description="评分理由")
 
+class NewsSourceStatus(BaseModel):
+    """新闻源状态。"""
+
+    requested_provider: str = Field(description="用户配置请求的新闻源")
+    actual_provider: str = Field(description="实际使用的新闻源")
+    fallback_used: bool = Field(description="是否发生回退")
+    fallback_reason: str = Field(default="", description="回退原因")
 
 class SentimentSummary(BaseModel):
     """多条新闻聚合后的情绪总结。"""
@@ -51,6 +58,7 @@ class ResearchReport(BaseModel):
     stock_name: str = Field(description="股票名称")
     stock_code: str = Field(default="", description="股票代码")
     industry: str = Field(default="", description="行业")
+    news_source_status: NewsSourceStatus = Field(description="新闻源状态")
     news: list[NewsItem] = Field(description="相关新闻列表")
     scores: list[NewsScore] = Field(description="新闻评分列表")
     sentiment: SentimentSummary = Field(description="情绪汇总")
