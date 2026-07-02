@@ -20,6 +20,7 @@ class ReportAgent:
         news: list[NewsItem],
         scores: list[NewsScore],
         sentiment: SentimentSummary,
+        features: dict[str, float | int],
         risk: RiskPrediction,
     ) -> ResearchReport:
         report_text = self._build_report_text(
@@ -30,6 +31,7 @@ class ReportAgent:
             news=news,
             scores=scores,
             sentiment=sentiment,
+            features=features,
             risk=risk,
         )
 
@@ -41,6 +43,7 @@ class ReportAgent:
             news=news,
             scores=scores,
             sentiment=sentiment,
+            features=features,
             risk=risk,
             report_text=report_text,
         )
@@ -54,6 +57,7 @@ class ReportAgent:
         news: list[NewsItem],
         scores: list[NewsScore],
         sentiment: SentimentSummary,
+        features: dict[str, float | int],
         risk: RiskPrediction,
     ) -> str:
         lines = []
@@ -82,7 +86,22 @@ class ReportAgent:
         lines.append(f"- 风险预测说明：{risk.summary}")
         lines.append("")
 
-        lines.append("## 三、关键新闻与评分")
+        lines.append("## 三、新闻聚合特征")
+        lines.append(f"- 新闻数量：{features['news_count']}")
+        lines.append(f"- 平均情绪分：{features['avg_sentiment_score']}")
+        lines.append(f"- 最低情绪分：{features['min_sentiment_score']}")
+        lines.append(f"- 最高情绪分：{features['max_sentiment_score']}")
+        lines.append(f"- 平均风险分：{features['avg_risk_score']}")
+        lines.append(f"- 最高风险分：{features['max_risk_score']}")
+        lines.append(f"- 负面新闻数量：{features['negative_news_count']}")
+        lines.append(f"- 正面新闻数量：{features['positive_news_count']}")
+        lines.append(f"- 政策新闻数量：{features['policy_news_count']}")
+        lines.append(f"- 竞争新闻数量：{features['competition_news_count']}")
+        lines.append(f"- 供应链新闻数量：{features['supply_chain_news_count']}")
+        lines.append(f"- 平均不确定性：{features['uncertainty_avg']}")
+        lines.append(f"- 平均市场关注度：{features['market_attention_avg']}")
+        lines.append("")
+        lines.append("## 四、关键新闻与评分")
         for index, (item, score) in enumerate(zip(news, scores), start=1):
             lines.append(f"### 新闻 {index}")
             lines.append(f"- 标题：{item.title}")
@@ -95,13 +114,13 @@ class ReportAgent:
             lines.append(f"- 评分理由：{score.reason}")
             lines.append("")
 
-        lines.append("## 四、后续观察重点")
+        lines.append("## 五、后续观察重点")
         lines.append("- 继续观察相关新闻数量是否明显增加。")
         lines.append("- 关注负面新闻是否集中在政策、竞争、成本或业绩方面。")
         lines.append("- 后续版本将接入真实新闻源、大模型评分和 XGBoost 风险预测。")
         lines.append("")
 
-        lines.append("## 五、免责声明")
+        lines.append("## 六、免责声明")
         lines.append("本报告仅用于学习、研究和系统演示，不构成任何投资建议。")
 
         return "\n".join(lines)

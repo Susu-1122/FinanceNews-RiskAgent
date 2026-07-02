@@ -4,6 +4,7 @@ from app.agents.report_agent import ReportAgent
 from app.agents.risk_prediction_agent import RiskPredictionAgent
 from app.agents.sentiment_agent import SentimentAgent
 from app.schemas import ResearchReport
+from app.ml.feature_engineering import build_news_features
 
 
 class FinanceRiskWorkflow:
@@ -32,6 +33,8 @@ class FinanceRiskWorkflow:
 
         sentiment = self.sentiment_agent.run(scores)
 
+        features = build_news_features(scores)
+
         risk = self.risk_prediction_agent.run(sentiment)
 
         report = self.report_agent.run(
@@ -42,6 +45,7 @@ class FinanceRiskWorkflow:
             news=news,
             scores=scores,
             sentiment=sentiment,
+            features=features,
             risk=risk,
         )
 

@@ -47,6 +47,7 @@ class SentimentSummary(BaseModel):
 class RiskPrediction(BaseModel):
     """XGBoost 或规则模型输出的风险预测。"""
 
+    
     risk_probability: float = Field(description="风险概率，范围 0 到 1")
     risk_level: str = Field(description="风险等级：low、medium、high")
     summary: str = Field(description="风险预测说明")
@@ -62,5 +63,6 @@ class ResearchReport(BaseModel):
     news: list[NewsItem] = Field(description="相关新闻列表")
     scores: list[NewsScore] = Field(description="新闻评分列表")
     sentiment: SentimentSummary = Field(description="情绪汇总")
+    features: dict[str, float | int] = Field(description="新闻聚合后的机器学习特征")
     risk: RiskPrediction = Field(description="风险预测")
     report_text: str = Field(description="中文调研报告正文")
