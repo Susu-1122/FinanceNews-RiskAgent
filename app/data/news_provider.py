@@ -1,3 +1,5 @@
+import feedparser
+
 from app.config import settings
 from app.schemas import NewsItem
 
@@ -5,8 +7,7 @@ from app.schemas import NewsItem
 class NewsProvider:
     """新闻数据 Provider。
 
-    当前 V1 初始版本仍然使用 mock 数据。
-    后续会在这里接入 RSS、AkShare 或其他新闻源。
+    支持 mock 和 rss 两种新闻源。
     """
 
     def get_news(
@@ -15,10 +16,50 @@ class NewsProvider:
         stock_code: str = "",
         industry: str = "",
     ) -> list[NewsItem]:
-        if settings.news_provider == "mock":
-            return self._get_mock_news(stock_name, stock_code, industry)
+        if settings.news_provider == "rss":
+            rss_news = self._get_rss_news(stock_name, stock_code, industry)
+            if rss_news:
+                return rss_news
 
         return self._get_mock_news(stock_name, stock_code, industry)
+
+    def _get_rss_news(
+        self,
+        stock_name: str,
+        stock_code: str = "",
+        industry: str = "",
+    ) -> list[NewsItem]:
+        feed = feedparser.parse(settings.rss_url)
+        news_items: list[NewsItem] = []
+
+        keywords = [
+            word
+            for word in [stock_name, stock_code, industry]
+            if word
+        ]
+
+        for entry in feed.entries[:20]:
+            title = entry.get("title", "")
+            summary = entry.get("summary", "")
+            link = entry.get("link", "")
+            published = entry.get("published", "")
+
+            combined_text = f"{title} {summary}"
+
+            if keywords and not any(keyword in combined_text for keyword in keywords):
+                continue
+
+            news_items.append(
+                NewsItem(
+                    title=title,
+                    summary=summary,
+                    source="rss",
+                    url=link,
+                    published_at=published,
+                )
+            )
+
+        return news_items
 
     def _get_mock_news(
         self,

@@ -15,6 +15,7 @@ class Settings:
     """
 
     news_provider: str = os.getenv("NEWS_PROVIDER", "mock")
+    rss_url: str = os.getenv("RSS_URL", "https://feeds.bbci.co.uk/news/business/rss.xml")
     llm_provider: str = os.getenv("LLM_PROVIDER", "mock")
     llm_model: str = os.getenv("LLM_MODEL", "mock-model")
     llm_api_key: str = os.getenv("LLM_API_KEY", "")
