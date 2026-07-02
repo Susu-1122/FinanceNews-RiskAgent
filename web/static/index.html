@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>FinanceNews-RiskAgent</title>
+    <style>
+        body {
+            font-family: Arial, "Microsoft YaHei", sans-serif;
+            margin: 40px;
+            background: #f6f8fa;
+            color: #222;
+        }
+
+        h1 {
+            margin-bottom: 8px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-top: 12px;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            margin-top: 18px;
+            padding: 10px 18px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .result-box {
+            white-space: pre-wrap;
+            background: #111827;
+            color: #e5e7eb;
+            padding: 18px;
+            border-radius: 8px;
+            min-height: 160px;
+            line-height: 1.6;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .card {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .card-title {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .card-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="panel">
+        <h1>财经新闻风险联动智能调研助手</h1>
+        <p>输入股票或行业信息，系统会生成新闻情绪、风险预测和调研报告。</p>
+
+        <label for="stockName">股票名称</label>
+        <input id="stockName" value="宁德时代">
+
+        <label for="stockCode">股票代码</label>
+        <input id="stockCode" value="300750">
+
+        <label for="industry">行业</label>
+        <input id="industry" value="新能源车">
+
+        <button onclick="analyze()">开始分析</button>
+    </div>
+
+    <div class="panel">
+        <h2>分析结果</h2>
+
+        <div class="summary">
+            <div class="card">
+                <div class="card-title">风险等级</div>
+                <div class="card-value" id="riskLevel">-</div>
+            </div>
+            <div class="card">
+                <div class="card-title">风险概率</div>
+                <div class="card-value" id="riskProbability">-</div>
+            </div>
+            <div class="card">
+                <div class="card-title">整体情绪</div>
+                <div class="card-value" id="overallSentiment">-</div>
+            </div>
+        </div>
+
+        <div id="reportText" class="result-box">等待分析...</div>
+    </div>
+</div>
+
+<script>
+    async function analyze() {
+        const stockName = document.getElementById("stockName").value;
+        const stockCode = document.getElementById("stockCode").value;
+        const industry = document.getElementById("industry").value;
+
+        const reportBox = document.getElementById("reportText");
+        reportBox.textContent = "正在分析，请稍等...";
+
+        const params = new URLSearchParams({
+            stock_name: stockName,
+            stock_code: stockCode,
+            industry: industry
+        });
+
+        try {
+            const response = await fetch(`/analyze?${params.toString()}`);
+            const data = await response.json();
+
+            document.getElementById("riskLevel").textContent = data.risk.risk_level;
+            document.getElementById("riskProbability").textContent = data.risk.risk_probability;
+            document.getElementById("overallSentiment").textContent = data.sentiment.overall_sentiment;
+
+            reportBox.textContent = data.report_text;
+        } catch (error) {
+            reportBox.textContent = "分析失败：" + error;
+        }
+    }
+</script>
+</body>
+</html>

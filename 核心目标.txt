@@ -1,0 +1,130 @@
+核心目标：
+用户输入股票/行业
+系统自动采集相关新闻
+大模型对新闻做多维度情感和风险评分
+把评分聚合成机器学习特征
+调用 XGBoost 模型预测风险
+多 Agent 生成结构化调研报告
+前端展示风险等级、新闻证据、风险因子和模型解释
+
+整体框架：
+用户输入层
+  ↓
+数据采集层
+  ↓
+数据清洗与存储层
+  ↓
+LLM 新闻理解与情感评分层
+  ↓
+特征工程层
+  ↓
+XGBoost 风险预测层
+  ↓
+多 Agent 报告生成与前端展示层
+
+具体框架：
+Frontend 页面
+  ↓
+FastAPI 后端
+  ↓
+Workflow 调度器
+  ↓
+Data Providers
+  - 新闻数据
+  - 行情数据
+  - 行业数据
+  - 基本面数据，可选
+  ↓
+Agents
+  - NewsCrawlerAgent
+  - NewsScoringAgent
+  - SentimentAgent
+  - EventRiskAgent
+  - MarketRegimeAgent
+  - XGBoostRiskAgent
+  - ResearchAgent
+  - ReportAgent
+  ↓
+Database
+  - SQLite/PostgreSQL
+  ↓
+Model Store
+  - xgboost_model.json
+
+项目重点：
+新闻采集 → LLM 多维度打分 → 特征聚合 → XGBoost 风险预测 → 调研报告
+
+
+
+
+
+最终项目目录：
+finance_news_risk_agent/
+  main.py
+  web_app.py
+  requirements.txt
+  .env.example
+  README.md
+
+  app/
+    config.py
+    schemas.py
+
+    agents/
+      base.py
+      news_crawler_agent.py
+      news_scoring_agent.py
+      sentiment_agent.py
+      event_risk_agent.py
+      market_regime_agent.py
+      xgboost_risk_agent.py
+      research_agent.py
+      report_agent.py
+
+    data/
+      news_provider.py
+      market_provider.py
+      industry_provider.py
+      database.py
+
+    graph/
+      workflow.py
+
+    llm/
+      client.py
+      prompts.py
+      parsing.py
+
+    ml/
+      feature_engineering.py
+      train_xgboost.py
+      predict_xgboost.py
+      evaluate_model.py
+
+    utils/
+      text_cleaner.py
+      dedup.py
+      logger.py
+      report_writer.py
+
+  data/
+    news.db
+    raw/
+    processed/
+    training_dataset.csv
+
+  models/
+    xgb_risk_model.json
+
+  web/
+    static/
+      index.html
+      app.js
+      styles.css
+
+  tests/
+    test_news_provider.py
+    test_llm_scoring.py
+    test_feature_engineering.py
+    test_xgboost_predict.py
+    test_workflow.py
