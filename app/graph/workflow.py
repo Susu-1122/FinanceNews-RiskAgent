@@ -5,6 +5,7 @@ from app.agents.risk_prediction_agent import RiskPredictionAgent
 from app.agents.sentiment_agent import SentimentAgent
 from app.schemas import ResearchReport
 from app.ml.feature_engineering import build_news_features
+from app.data.news_storage import NewsStorage
 
 
 class FinanceRiskWorkflow:
@@ -16,6 +17,7 @@ class FinanceRiskWorkflow:
         self.sentiment_agent = SentimentAgent()
         self.risk_prediction_agent = RiskPredictionAgent()
         self.report_agent = ReportAgent()
+        self.news_storage = NewsStorage()
 
     def run(
         self,
@@ -27,6 +29,13 @@ class FinanceRiskWorkflow:
             stock_name=stock_name,
             stock_code=stock_code,
             industry=industry,
+        )
+        self.news_storage.save_latest_news(
+            stock_name=stock_name,
+            stock_code=stock_code,
+            industry=industry,
+            news_source_status=news_source_status,
+            news=news,
         )
 
         scores = [self.news_scorer.run(item) for item in news]
