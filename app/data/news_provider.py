@@ -21,7 +21,7 @@ class NewsProvider:
         if requested_provider == "rss":
             rss_news = self._get_rss_news(stock_name, stock_code, industry)
             if rss_news:
-                return rss_news, NewsSourceStatus(
+                return self._deduplicate_news(rss_news), NewsSourceStatus(
                     requested_provider=requested_provider,
                     actual_provider="rss",
                     fallback_used=False,
@@ -49,7 +49,7 @@ class NewsProvider:
                 )
 
             if akshare_news:
-                return akshare_news, NewsSourceStatus(
+                return self._deduplicate_news(akshare_news), NewsSourceStatus(
                     requested_provider=requested_provider,
                     actual_provider="akshare",
                     fallback_used=False,
@@ -64,7 +64,9 @@ class NewsProvider:
                 reason="AkShare 未返回相关新闻，已回退到 Mock 新闻。",
             )
 
-        mock_news = self._get_mock_news(stock_name, stock_code, industry)
+        mock_news = self._deduplicate_news(
+            self._get_mock_news(stock_name, stock_code, industry)
+        )
         return mock_news, NewsSourceStatus(
             requested_provider=requested_provider,
             actual_provider="mock",
@@ -185,6 +187,30 @@ class NewsProvider:
                         return value_text
         return ""
 
+    def _deduplicate_news(self, news_items: list[NewsItem]) -> list[NewsItem]:
+        seen_keys: set[str] = set()
+        deduplicated: list[NewsItem] = []
+
+        for item in news_items:
+            title = item.title.strip()
+            url = item.url.strip()
+
+            if not title:
+                continue
+
+            if url:
+                key = f"url::{url}"
+            else:
+                key = f"title::{title}"
+
+            if key in seen_keys:
+                continue
+
+            seen_keys.add(key)
+            deduplicated.append(item)
+
+        return deduplicated
+
     def _fallback_to_mock(
         self,
         requested_provider: str,
@@ -193,7 +219,9 @@ class NewsProvider:
         industry: str,
         reason: str,
     ) -> tuple[list[NewsItem], NewsSourceStatus]:
-        mock_news = self._get_mock_news(stock_name, stock_code, industry)
+        mock_news = self._deduplicate_news(
+            self._get_mock_news(stock_name, stock_code, industry)
+        )
         return mock_news, NewsSourceStatus(
             requested_provider=requested_provider,
             actual_provider="mock",
