@@ -9,3 +9,4 @@ beautifulsoup4
 feedparser
 xgboost
 scikit-learn
+pytest
