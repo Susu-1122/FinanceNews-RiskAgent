@@ -15,8 +15,12 @@
             margin-bottom: 8px;
         }
 
+        h2 {
+            margin-top: 0;
+        }
+
         .container {
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 0 auto;
         }
 
@@ -57,19 +61,9 @@
             background: #1d4ed8;
         }
 
-        .result-box {
-            white-space: pre-wrap;
-            background: #111827;
-            color: #e5e7eb;
-            padding: 18px;
-            border-radius: 8px;
-            min-height: 160px;
-            line-height: 1.6;
-        }
-
         .summary {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 12px;
             margin-bottom: 16px;
         }
@@ -87,9 +81,54 @@
         }
 
         .card-value {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: bold;
             margin-top: 6px;
+            word-break: break-word;
+        }
+
+        .news-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .news-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            background: #fcfcfd;
+        }
+
+        .news-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .news-meta {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .result-box {
+            white-space: pre-wrap;
+            background: #111827;
+            color: #e5e7eb;
+            padding: 18px;
+            border-radius: 8px;
+            min-height: 160px;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+
+        @media (max-width: 800px) {
+            body {
+                margin: 16px;
+            }
+
+            .summary {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -112,7 +151,7 @@
     </div>
 
     <div class="panel">
-        <h2>分析结果</h2>
+        <h2>分析总览</h2>
 
         <div class="summary">
             <div class="card">
@@ -127,8 +166,20 @@
                 <div class="card-title">整体情绪</div>
                 <div class="card-value" id="overallSentiment">-</div>
             </div>
+            <div class="card">
+                <div class="card-title">新闻数量</div>
+                <div class="card-value" id="newsCount">-</div>
+            </div>
         </div>
+    </div>
 
+    <div class="panel">
+        <h2>关键新闻与评分</h2>
+        <div id="newsList" class="news-list">等待分析...</div>
+    </div>
+
+    <div class="panel">
+        <h2>调研报告</h2>
         <div id="reportText" class="result-box">等待分析...</div>
     </div>
 </div>
@@ -140,7 +191,10 @@
         const industry = document.getElementById("industry").value;
 
         const reportBox = document.getElementById("reportText");
+        const newsList = document.getElementById("newsList");
+
         reportBox.textContent = "正在分析，请稍等...";
+        newsList.textContent = "正在获取新闻与评分...";
 
         const params = new URLSearchParams({
             stock_name: stockName,
@@ -155,11 +209,55 @@
             document.getElementById("riskLevel").textContent = data.risk.risk_level;
             document.getElementById("riskProbability").textContent = data.risk.risk_probability;
             document.getElementById("overallSentiment").textContent = data.sentiment.overall_sentiment;
+            document.getElementById("newsCount").textContent = data.news.length;
 
+            renderNewsList(data.news, data.scores);
             reportBox.textContent = data.report_text;
         } catch (error) {
             reportBox.textContent = "分析失败：" + error;
+            newsList.textContent = "新闻展示失败：" + error;
         }
+    }
+
+    function renderNewsList(news, scores) {
+        const newsList = document.getElementById("newsList");
+        newsList.innerHTML = "";
+
+        if (!news || news.length === 0) {
+            newsList.textContent = "没有找到相关新闻。";
+            return;
+        }
+
+        news.forEach((item, index) => {
+            const score = scores[index];
+
+            const div = document.createElement("div");
+            div.className = "news-item";
+
+            div.innerHTML = `
+                <div class="news-title">${index + 1}. ${escapeHtml(item.title)}</div>
+                <div class="news-meta">
+                    摘要：${escapeHtml(item.summary || "无")}<br>
+                    来源：${escapeHtml(item.source || "unknown")}<br>
+                    发布时间：${escapeHtml(item.published_at || "未知")}<br>
+                    情绪分：${score ? score.sentiment_score : "-"}，
+                    风险分：${score ? score.risk_score : "-"}，
+                    事件类型：${score ? escapeHtml(score.event_type) : "-"}<br>
+                    评分理由：${score ? escapeHtml(score.reason) : "-"}
+                </div>
+            `;
+
+            newsList.appendChild(div);
+        });
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
     }
 </script>
 </body>
