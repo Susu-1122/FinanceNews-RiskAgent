@@ -16,6 +16,7 @@ class Settings:
 
     news_provider: str = os.getenv("NEWS_PROVIDER", "mock")
     rss_url: str = os.getenv("RSS_URL", "https://feeds.bbci.co.uk/news/business/rss.xml")
+    akshare_news_limit: int = int(os.getenv("AKSHARE_NEWS_LIMIT", "10"))
     llm_provider: str = os.getenv("LLM_PROVIDER", "mock")
     llm_model: str = os.getenv("LLM_MODEL", "mock-model")
     llm_api_key: str = os.getenv("LLM_API_KEY", "")

@@ -7,7 +7,7 @@ from app.schemas import NewsItem, NewsSourceStatus
 class NewsProvider:
     """新闻数据 Provider。
 
-    支持 mock 和 rss 两种新闻源。
+    支持 mock、rss、akshare 三种新闻源。
     """
 
     def get_news(
@@ -28,12 +28,40 @@ class NewsProvider:
                     fallback_reason="",
                 )
 
-            mock_news = self._get_mock_news(stock_name, stock_code, industry)
-            return mock_news, NewsSourceStatus(
+            return self._fallback_to_mock(
                 requested_provider=requested_provider,
-                actual_provider="mock",
-                fallback_used=True,
-                fallback_reason="RSS 未匹配到相关新闻，已回退到 Mock 新闻。",
+                stock_name=stock_name,
+                stock_code=stock_code,
+                industry=industry,
+                reason="RSS 未匹配到相关新闻，已回退到 Mock 新闻。",
+            )
+
+        if requested_provider == "akshare":
+            try:
+                akshare_news = self._get_akshare_news(stock_name, stock_code, industry)
+            except Exception as exc:
+                return self._fallback_to_mock(
+                    requested_provider=requested_provider,
+                    stock_name=stock_name,
+                    stock_code=stock_code,
+                    industry=industry,
+                    reason=f"AkShare 新闻获取失败，已回退到 Mock 新闻。错误：{exc}",
+                )
+
+            if akshare_news:
+                return akshare_news, NewsSourceStatus(
+                    requested_provider=requested_provider,
+                    actual_provider="akshare",
+                    fallback_used=False,
+                    fallback_reason="",
+                )
+
+            return self._fallback_to_mock(
+                requested_provider=requested_provider,
+                stock_name=stock_name,
+                stock_code=stock_code,
+                industry=industry,
+                reason="AkShare 未返回相关新闻，已回退到 Mock 新闻。",
             )
 
         mock_news = self._get_mock_news(stock_name, stock_code, industry)
@@ -53,11 +81,7 @@ class NewsProvider:
         feed = feedparser.parse(settings.rss_url)
         news_items: list[NewsItem] = []
 
-        keywords = [
-            word
-            for word in [stock_name, stock_code, industry]
-            if word
-        ]
+        keywords = [word for word in [stock_name, stock_code, industry] if word]
 
         for entry in feed.entries[:20]:
             title = entry.get("title", "")
@@ -81,6 +105,58 @@ class NewsProvider:
             )
 
         return news_items
+
+    def _get_akshare_news(
+        self,
+        stock_name: str,
+        stock_code: str = "",
+        industry: str = "",
+    ) -> list[NewsItem]:
+        import akshare as ak
+
+        if not stock_code:
+            return []
+
+        raw_news = ak.stock_news_em(symbol=stock_code)
+        news_items: list[NewsItem] = []
+
+        for _, row in raw_news.head(settings.akshare_news_limit).iterrows():
+            title = str(row.get("新闻标题", "") or row.get("标题", ""))
+            content = str(row.get("新闻内容", "") or row.get("内容", ""))
+            url = str(row.get("新闻链接", "") or row.get("链接", ""))
+            source = str(row.get("文章来源", "") or row.get("来源", "akshare"))
+            published_at = str(row.get("发布时间", "") or row.get("时间", ""))
+
+            summary = content[:120] if content else ""
+
+            news_items.append(
+                NewsItem(
+                    title=title,
+                    summary=summary,
+                    content=content,
+                    source=f"akshare:{source}",
+                    url=url,
+                    published_at=published_at,
+                )
+            )
+
+        return news_items
+
+    def _fallback_to_mock(
+        self,
+        requested_provider: str,
+        stock_name: str,
+        stock_code: str,
+        industry: str,
+        reason: str,
+    ) -> tuple[list[NewsItem], NewsSourceStatus]:
+        mock_news = self._get_mock_news(stock_name, stock_code, industry)
+        return mock_news, NewsSourceStatus(
+            requested_provider=requested_provider,
+            actual_provider="mock",
+            fallback_used=True,
+            fallback_reason=reason,
+        )
 
     def _get_mock_news(
         self,
