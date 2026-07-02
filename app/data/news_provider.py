@@ -120,27 +120,70 @@ class NewsProvider:
         raw_news = ak.stock_news_em(symbol=stock_code)
         news_items: list[NewsItem] = []
 
-        for _, row in raw_news.head(settings.akshare_news_limit).iterrows():
-            title = str(row.get("新闻标题", "") or row.get("标题", ""))
-            content = str(row.get("新闻内容", "") or row.get("内容", ""))
-            url = str(row.get("新闻链接", "") or row.get("链接", ""))
-            source = str(row.get("文章来源", "") or row.get("来源", "akshare"))
-            published_at = str(row.get("发布时间", "") or row.get("时间", ""))
+        for _, row in raw_news.head(settings.akshare_news_limit * 3).iterrows():
+            title = self._get_first_available_value(
+                row,
+                ["新闻标题", "标题", "title"],
+            )
+            content = self._get_first_available_value(
+                row,
+                ["新闻内容", "内容", "content", "summary"],
+            )
+            url = self._get_first_available_value(
+                row,
+                ["新闻链接", "链接", "url", "link"],
+            )
+            source = self._get_first_available_value(
+                row,
+                ["文章来源", "来源", "source"],
+            )
+            published_at = self._get_first_available_value(
+                row,
+                ["发布时间", "时间", "date", "datetime"],
+            )
 
-            summary = content[:120] if content else ""
+            if not title:
+                continue
+
+            summary = content[:160] if content else ""
+            combined_text = f"{title} {summary}"
 
             news_items.append(
                 NewsItem(
                     title=title,
                     summary=summary,
                     content=content,
-                    source=f"akshare:{source}",
+                    source=f"akshare:{source or 'unknown'}",
                     url=url,
                     published_at=published_at,
                 )
             )
 
-        return news_items
+        keywords = [word for word in [stock_name, stock_code, industry] if word]
+        filtered_news = [
+            item
+            for item in news_items
+            if not keywords
+            or any(
+                keyword in f"{item.title} {item.summary} {item.content}"
+                for keyword in keywords
+            )
+        ]
+
+        if filtered_news:
+            return filtered_news[: settings.akshare_news_limit]
+
+        return news_items[: settings.akshare_news_limit]
+    
+    def _get_first_available_value(self, row, field_names: list[str]) -> str:
+        for field_name in field_names:
+            if field_name in row:
+                value = row.get(field_name)
+                if value is not None:
+                    value_text = str(value).strip()
+                    if value_text and value_text.lower() != "nan":
+                        return value_text
+        return ""
 
     def _fallback_to_mock(
         self,
